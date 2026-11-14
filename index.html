@@ -249,7 +249,7 @@ output{font-family:var(--f-mono);font-size:12.5px;min-width:48px;text-align:righ
         <button class="btn small" id="maskClear" type="button">칠한 곳 모두 지우기</button>
       </div>
       <div class="stage-actions">
-        <span class="out-meta">고른 칸 전체 <span class="mono" id="outLabel">-</span></span>
+        <span class="out-meta">전체 크기 <span class="mono" id="outLabel">-</span></span>
         <button class="btn" id="sendBtn" type="button">미리보기에 넣기</button>
         <button class="btn primary" id="dlAllBtn" type="button">전체 다운로드</button>
       </div>
@@ -326,7 +326,7 @@ output{font-family:var(--f-mono);font-size:12.5px;min-width:48px;text-align:righ
           <button class="btn small" type="button" id="selAll">전체</button>
           <button class="btn small" type="button" id="selInvert">반전</button>
         </div>
-        <p class="hint">여러 이미지를 섞을 땐 일부 칸만 고르세요. 나머지 칸은 다음 이미지로 채우면 돼요. Shift를 누르고 누르면 범위로 골라져요. 숫자는 첨부 순서예요.</p>
+        <p class="hint">그림은 항상 전체 칸에 맞춰 나뉘고, 고른 칸만 저장·미리보기로 가요. 반반 섞으려면 이 그림에서 1~3번, 다음 그림에서 4~6번처럼 고르면 돼요. Shift를 누르고 누르면 범위로 골라져요.</p>
       </section>
 
       <section>
@@ -685,7 +685,7 @@ const S = {
   img: null, mode: 'carousel', gridN: 4, count: 6, ratioMode: 'auto', ratios: Array(MAXN).fill('4:5'),
   sel: Array(6).fill(true), last: null,
   z: 1, px: 0, py: 0, bg: '#ffffff',
-  gap: { grid: { on: true, px: 2 }, carousel: { on: false, px: 4 } },
+  gap: { grid: { on: true, px: 2 }, carousel: { on: true, px: 4 } },
   res: 'auto', fmt: 'png', nextSel: null, userLoaded: false,
   // 튀어나옴 연출
   fx: { on: false, dir: 'v', place: 'all', n: 10, w: 12, color: '#000000' },
@@ -695,11 +695,11 @@ const S = {
 const nCells = () => S.mode === 'grid' ? S.gridN : S.count;
 function gapUnits() {
   const G = S.gap[S.mode]; if (!G.on) return 0;
-  return S.mode === 'grid' ? G.px / REF_W : G.px / 500;   // 캐러셀: 한 장 높이 약 500px 기준
+  return S.mode === 'grid' ? G.px / REF_W : G.px / 650;   // 캐러셀: 화면에 보이는 높이 약 650px 기준
 }
 // 원본 N등분: 고른 칸 수만큼 이미지 폭을 똑같이 나눔 (잘리는 곳 없이 이미지 전체가 들어감)
 function autoRatio() {
-  const k = Math.max(1, S.sel.filter(Boolean).length), g = gapUnits();
+  const k = Math.max(1, S.count), g = gapUnits();
   const A = S.img ? S.img.w / S.img.h : 16 / 9;
   return Math.max(0.01, (A - (k - 1) * g) / k);
 }
@@ -709,7 +709,7 @@ function carouselRatios() {
 const ratioLabel = r => r < 1 ? `1:${(1 / r).toFixed(1)}` : `${r.toFixed(2)}:1`;
 const curCells = () => S.mode === 'grid' ? gridCells(S.gridN, gapUnits()) : carouselCells(S.count, carouselRatios(), gapUnits());
 const selIdx = () => S.sel.map((v, i) => v ? i : -1).filter(i => i >= 0);
-const curBox = () => { const c = curCells(); return bboxOf(selIdx().map(i => c[i])); };
+const curBox = () => bboxOf(curCells());   // 그림은 항상 전체 칸에 맞춰 배치 (고른 칸은 내보낼 조각만 정함)
 const fmtInfo = () => S.fmt === 'jpg' ? { mime: 'image/jpeg', ext: 'jpg' } : { mime: 'image/png', ext: 'png' };
 
 const cv = $('#cropCanvas'), ctx = cv.getContext('2d');
@@ -827,7 +827,7 @@ function draw() {
     ctx.fillStyle = 'rgba(255,255,255,.78)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.font = '500 13px "IBM Plex Mono", monospace';
     ctx.fillText(`${i + 1}`, x + c.w * k / 2, y + c.h * k / 2 - 9);
-    if (c.w * k >= 70) { ctx.font = '500 12px "IBM Plex Sans KR", sans-serif'; ctx.fillText('다른 이미지', x + c.w * k / 2, y + c.h * k / 2 + 9); }
+    if (c.w * k >= 44) { ctx.font = '500 12px "IBM Plex Sans KR", sans-serif'; ctx.fillText('제외', x + c.w * k / 2, y + c.h * k / 2 + 9); }
   });
   // 자르는 선과 번호
   for (const i of sel) {
@@ -927,7 +927,7 @@ function syncGapUI() {
   $('#gapOn').checked = G.on; $('#gapPx').value = G.px; $('#gapPx').disabled = !G.on; $('#gapOut').textContent = G.px + 'px';
   $('#gapHint').textContent = S.mode === 'grid'
     ? '그리드는 칸 사이가 2px(PC 이미지 폭 516px 기준) 벌어져요. 켜 두면 그만큼 버려서 올렸을 때 선이 이어져 보여요.'
-    : '캐러셀은 한 장씩 넘겨 보는 방식이라 보통 끄면 돼요. 옆 장이 살짝 보일 때도 선이 이어지게 하려면 켜고 간격을 맞추세요.';
+    : '캐러셀은 장 사이가 약 4px(높이 650px 기준) 벌어져요. 켜 두면 장마다 그만큼 버려서 올렸을 때 그림이 이어져 보여요.';
 }
 $('#gapOn').addEventListener('change', e => { S.gap[S.mode].on = e.target.checked; syncGapUI(); refreshSplit(); });
 $('#gapPx').addEventListener('input', e => { S.gap[S.mode].px = +e.target.value; $('#gapOut').textContent = e.target.value + 'px'; refreshSplit(); });
@@ -1033,13 +1033,13 @@ function toggleSel(i, shift) {
     for (let k = a; k <= b; k++) S.sel[k] = want;
   } else S.sel[i] = want;
   if (!selIdx().length) { S.sel[i] = true; toast('최소 한 칸은 골라야 해요.'); }
-  S.last = i; if (S.ratioMode === 'auto' && S.mode === 'carousel') resetTransform(); refreshSplit();
+  S.last = i; refreshSplit();
 }
-$('#selAll').onclick = () => { S.sel = S.sel.map(() => true); if (S.ratioMode === 'auto') resetTransform(); refreshSplit(); };
+$('#selAll').onclick = () => { S.sel = S.sel.map(() => true); refreshSplit(); };
 $('#selInvert').onclick = () => {
   const inv = S.sel.map(v => !v);
   if (!inv.some(Boolean)) { toast('이미 전체가 골라져 있어요.'); return; }
-  S.sel = inv; if (S.ratioMode === 'auto') resetTransform(); refreshSplit();
+  S.sel = inv; refreshSplit();
 };
 
 function buildSlotPicker() {
@@ -1118,7 +1118,7 @@ function refreshSplit() {
   const same = S.ratios.slice(0, S.count).every(r => r === S.ratios[0]);
   $$('#ratioSeg button').forEach(b => b.setAttribute('aria-pressed', auto ? b.dataset.r === 'auto' : (same && b.dataset.r === S.ratios[0])));
   $('#manualRatio').hidden = auto; $('#autoInfo').hidden = !auto;
-  if (auto) $('#autoInfo').textContent = `이미지를 고른 칸 수(${Math.max(1, S.sel.filter(Boolean).length)}칸)만큼 똑같이 나눠요. 지금 한 칸 비율은 약 ${ratioLabel(autoRatio())}이에요. 잘리는 곳 없이 그림 전체가 들어가요.`;
+  if (auto) $('#autoInfo').textContent = `이미지를 ${S.count}칸으로 똑같이 나눠요. 지금 한 칸 비율은 약 ${ratioLabel(autoRatio())}이에요. 잘리는 곳 없이 그림 전체가 들어가요.`;
   $('#cntInput').value = S.count;
   $('#imgName').textContent = S.img ? S.img.name : '-';
   if (S.mode === 'carousel') buildRatioGrid();
