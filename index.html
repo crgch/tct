@@ -515,7 +515,8 @@ output{font-family:var(--f-mono);font-size:12.5px;min-width:48px;text-align:righ
       <section>
         <h2>저장</h2>
         <button class="btn primary block" id="dlPreview" type="button">첨부 순서대로 전체 다운로드</button>
-        <p class="hint">파일 이름 앞 두 자리 숫자가 첨부 순서예요.</p>
+        <p class="hint" id="batchHint"></p>
+        <div class="row"><button class="btn small" id="batchReset" type="button">번호 1부터 다시</button></div>
         <p class="hint dl-hint"></p>
       </section>
     </div>
@@ -1269,6 +1270,7 @@ function renderPreview() {
     ord.appendChild(d);
   }
   $('#orderCount').textContent = `${filled}/${n}`;
+  updateBatchHint();
 
   // 이어 붙여 보기 (캐러셀만)
   $('#stripWrap').hidden = !carousel;
@@ -1455,14 +1457,31 @@ $('#toneSeg').addEventListener('click', e => { const b = e.target.closest('butto
 $('#widthSeg').addEventListener('click', e => { const b = e.target.closest('button[data-w]'); if (!b) return; P.width = b.dataset.w === 'fit' ? 'fit' : +b.dataset.w; renderPreview(); });
 $('#showEdit').addEventListener('change', e => { P.edit = e.target.checked; renderPreview(); });
 
+/* 저장 묶음 번호: 저장할 때마다 i1 → i2 → i3 … (이 브라우저에 기억) */
+let batchMem = 1;
+function getBatch() {
+  try { const v = parseInt(localStorage.getItem('tis-batch'), 10); if (v > 0) return v; } catch (e) {}
+  return batchMem;
+}
+function setBatch(v) {
+  batchMem = v;
+  try { localStorage.setItem('tis-batch', String(v)); } catch (e) {}
+  updateBatchHint();
+}
+function updateBatchHint() {
+  const b = getBatch();
+  $('#batchHint').textContent = `다음 저장 이름: i${b}-1 ~ i${b}-${P.n} (i 뒤 숫자는 저장할 때마다 1씩 올라가고, - 뒤 숫자가 첨부 순서예요)`;
+}
+$('#batchReset').onclick = () => { setBatch(1); toast('다음 저장부터 i1로 시작해요.'); };
 $('#dlPreview').onclick = e => withBusy(e.currentTarget, async () => {
-  const n = P.n, files = [];
+  const n = P.n, b = getBatch(), files = [];
   for (let i = 0; i < n; i++) {
     const it = itemById(P.slots[i]); if (!it) continue;
-    files.push({ name: `${pad2(i + 1)}_${safeName(it.label)}.${it.ext}`, blob: it.blob });
+    files.push({ name: `i${b}-${i + 1}.${it.ext}`, blob: it.blob });
   }
   if (!files.length) { toast('칸이 비어 있어요. 보관함에서 이미지를 넣어 주세요.'); return; }
   await saveMany(files);
+  setBatch(b + 1);
 });
 
 /* ---------- 탭 ---------- */
