@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  /* 레이아웃: 상단 탭 + [작업 화면 | 설정 패널] 2단, 좁은 화면에선 1단으로 쌓임 */
+  /* 레이아웃: 상단 탭 + [위: 작업/미리보기 화면 | 아래: 설정(스크롤)] */
   --bg:#eef2f0; --surface:#ffffff; --surface-2:#f5f8f7; --ink:#15201c; --muted:#5b6a65; --line:#d6dedb;
   --accent:#0b7a6b; --accent-ink:#ffffff; --accent-soft:#dcefea; --danger:#b83a28;
   --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
@@ -29,14 +29,14 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box}
-html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;overflow:hidden}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 [hidden]{display:none !important}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-header.top{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
-.top-in{max-width:1240px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:12px 20px;flex-wrap:wrap}
+header.top{flex:none;z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-in{padding:10px 16px;display:flex;align-items:center;gap:12px 20px;flex-wrap:wrap}
 .brand{display:flex;align-items:baseline;gap:10px;margin-right:auto;flex-wrap:wrap}
 .brand h1{font-size:17px;font-weight:700;margin:0;letter-spacing:-.01em;text-wrap:balance}
 .brand small{color:var(--muted);font-family:var(--f-mono);font-size:11.5px}
@@ -44,13 +44,20 @@ header.top{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1
 .tab{appearance:none;border:0;background:transparent;color:var(--muted);font:inherit;font-weight:600;padding:7px 18px;border-radius:7px;cursor:pointer}
 .tab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line),0 1px 2px rgba(0,0,0,.06)}
 
-main{max-width:1240px;margin:0 auto;padding:20px}
-.work{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
-@media (max-width:900px){.work{grid-template-columns:1fr}}
+main{flex:1;min-height:0;display:flex;flex-direction:column;padding:12px 16px 16px}
+/* 화면 = [위: 작업/미리보기 화면] [손잡이] [아래: 설정, 휠로 스크롤] */
+.view{--stage:60%;flex:1;min-height:0;display:flex;flex-direction:column}
+.stage-area{flex:0 0 var(--stage);min-height:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px;overflow:hidden}
+.stage-bar{display:flex;gap:8px 16px;align-items:center;flex-wrap:wrap}
+.stage-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-left:auto}
+.out-meta{font-size:12.5px;color:var(--muted)}
+.out-meta .mono{color:var(--ink)}
+.resizer{flex:none;height:14px;display:flex;align-items:center;justify-content:center;cursor:row-resize;touch-action:none}
+.resizer span{width:48px;height:4px;border-radius:2px;background:var(--line)}
+.resizer:hover span,.resizer:focus-visible span,.resizer.drag span{background:var(--accent)}
+.resizer:focus-visible{outline:none}
 
-.stage{position:sticky;top:76px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
-@media (max-width:900px){.stage{position:static}}
-.canvas-box{display:flex;justify-content:center;align-items:center;background:var(--surface-2);border-radius:10px;padding:16px;min-height:240px;overflow-x:auto}
+.canvas-box{flex:1 1 0;min-height:0;display:flex;justify-content:center;align-items:center;background:var(--surface-2);border-radius:10px;padding:12px;overflow:auto}
 .canvas-box.wide{justify-content:flex-start}
 .canvas-box.drop{outline:2px dashed var(--accent);outline-offset:-6px}
 #cropCanvas{display:block;flex:none;touch-action:none;cursor:grab;box-shadow:0 0 0 1px var(--line),0 6px 18px rgba(0,0,0,.08)}
@@ -63,9 +70,9 @@ main{max-width:1240px;margin:0 auto;padding:20px}
 .stage-meta{display:flex;justify-content:space-between;gap:6px 16px;flex-wrap:wrap;color:var(--muted);font-size:12.5px}
 .stage-meta .mono{color:var(--ink)}
 
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;min-width:0}
-.panel section{padding:14px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
-.panel section:first-child{border-top:0}
+.panel{flex:1 1 0;min-height:0;min-width:0;overflow-y:auto;overscroll-behavior:contain;background:var(--surface);border:1px solid var(--line);border-radius:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));align-content:start}
+.panel section{padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0;box-shadow:0 0 0 .5px var(--line)}
+.panel section.full{grid-column:1 / -1}
 .panel h2{font-size:12px;font-weight:600;color:var(--muted);margin:0;letter-spacing:.02em;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .panel h2 .mono{font-weight:500}
 .sub{font-size:12px;color:var(--muted);margin:2px 0 -4px}
@@ -112,7 +119,7 @@ label{font-size:13px}
 output{font-family:var(--f-mono);font-size:12.5px;min-width:48px;text-align:right}
 .field{display:grid;grid-template-columns:64px 1fr auto;gap:8px;align-items:center}
 
-.pieces{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;max-height:420px;overflow:auto}
+.pieces{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
 .piece{display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);border-radius:9px;padding:6px;background:var(--surface-2)}
 .piece .thumb{height:84px;display:flex;align-items:center;justify-content:center}
 .piece canvas{max-width:100%;max-height:84px;width:auto;height:auto;display:block;border-radius:3px;box-shadow:0 0 0 1px var(--line)}
@@ -121,15 +128,14 @@ output{font-family:var(--f-mono);font-size:12.5px;min-width:48px;text-align:righ
 .pc-meta .size{font-family:var(--f-mono);font-size:10.5px;color:var(--muted)}
 
 /* 미리보기 */
-#view-preview.work{grid-template-columns:minmax(0,1fr) 320px}
-@media (max-width:900px){#view-preview.work{grid-template-columns:1fr}}
-.pv-stage{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.pv-top{padding:0}
 .ratio-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px}
 .ratio-grid label{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;padding:3px 3px 3px 8px;background:var(--surface-2);font-family:var(--f-mono);font-size:12px;color:var(--muted)}
 .ratio-grid label.diff{border-color:var(--accent);color:var(--ink)}
 .ratio-grid input{width:100%;min-width:0;border:1px solid transparent;background:var(--surface);border-radius:5px;padding:4px 6px;font-family:var(--f-mono);font-size:12.5px;color:var(--ink)}
 .ratio-grid input:focus{border-color:var(--accent);outline:none}
-.timeline{border-radius:10px;padding:8px 0;display:flex;justify-content:center;background:var(--t-bg);transition:background .2s}
+.timeline{flex:1;min-height:0;overflow:auto;border-radius:13px;padding:16px 0;display:flex;background:var(--t-bg);transition:background .2s}
+.timeline > .tweet{margin:auto}
 .timeline[data-tone="light"]{--t-bg:#ffffff;--t-ink:#0f1419;--t-sub:#536471;--t-line:#e1e8ed;--t-empty:#f2f5f7}
 .timeline[data-tone="dim"]{--t-bg:#15202b;--t-ink:#f7f9f9;--t-sub:#8b98a5;--t-line:#38444d;--t-empty:#1e2a36}
 .timeline[data-tone="black"]{--t-bg:#000000;--t-ink:#e7e9ea;--t-sub:#71767b;--t-line:#2f3336;--t-empty:#16181c}
@@ -167,7 +173,6 @@ output{font-family:var(--f-mono);font-size:12.5px;min-width:48px;text-align:righ
 .tw-actions{display:flex;justify-content:space-between;max-width:425px;color:var(--t-sub);padding-top:6px}
 .tw-actions svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 
-.order h3{font-size:12px;font-weight:600;color:var(--muted);margin:0 0 8px;display:flex;justify-content:space-between;gap:8px}
 .order-list{display:flex;gap:6px;flex-wrap:wrap}
 .ord{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:9px;padding:4px 8px 4px 4px;background:var(--surface-2);font-size:12px}
 .ord-n{font-family:var(--f-mono);font-weight:500;min-width:18px;text-align:center}
@@ -178,7 +183,7 @@ output{font-family:var(--f-mono);font-size:12.5px;min-width:48px;text-align:righ
 .strip img,.strip .ph{height:96px;width:auto;display:block;flex:none}
 .strip .ph{background:repeating-linear-gradient(45deg,var(--line) 0 4px,transparent 4px 10px)}
 
-.pool{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;max-height:420px;overflow:auto;padding:2px}
+.pool{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;padding:2px}
 .pool-item{position:relative;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);padding:4px;cursor:pointer;display:flex;flex-direction:column;gap:4px;color:inherit}
 .pool-item img{width:100%;aspect-ratio:1;object-fit:contain;display:block;border-radius:5px;background:repeating-conic-gradient(var(--line) 0 25%,transparent 0 50%) 0 0/12px 12px;-webkit-user-drag:none}
 .pool-item .lbl{font-size:11.5px;font-family:var(--f-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px}
@@ -201,7 +206,7 @@ output{font-family:var(--f-mono);font-size:12.5px;min-width:48px;text-align:righ
 .fb-list figcaption{font-family:var(--f-mono);font-size:11px;color:var(--muted);word-break:break-all}
 
 @media (prefers-reduced-motion: reduce){*{transition:none !important;scroll-behavior:auto !important}}
-@media (max-width:420px){main{padding:16px}.top-in{padding:10px 16px}.canvas-box{padding:8px}}
+@media (max-width:420px){main{padding:8px 10px 10px}.top-in{padding:8px 12px}.canvas-box{padding:8px}.stage-area{padding:8px}}
 </style>
 </head>
 <body>
@@ -220,8 +225,9 @@ output{font-family:var(--f-mono);font-size:12.5px;min-width:48px;text-align:righ
 
 <main>
   <!-- 분할 -->
-  <div id="view-split" class="work" role="tabpanel" aria-labelledby="tab-split">
-    <section class="stage" aria-label="자를 영역">
+  <div id="view-split" class="view" role="tabpanel" aria-labelledby="tab-split">
+    <section class="stage-area" aria-label="자를 영역">
+      <div class="stage-bar">
       <div class="tool-row" id="toolRow" hidden>
         <div class="seg" id="toolSeg" role="group" aria-label="작업 도구">
           <button type="button" data-tool="move" aria-pressed="true">이동·확대</button>
@@ -235,16 +241,22 @@ output{font-family:var(--f-mono);font-size:12.5px;min-width:48px;text-align:righ
         </div>
         <button class="btn small" id="maskClear" type="button">칠한 곳 모두 지우기</button>
       </div>
+      <div class="stage-actions">
+        <span class="out-meta">고른 칸 전체 <span class="mono" id="outLabel">-</span></span>
+        <button class="btn" id="sendBtn" type="button">미리보기에 넣기</button>
+        <button class="btn primary" id="dlAllBtn" type="button">전체 다운로드</button>
+      </div>
+      </div>
       <div class="canvas-box" id="stage">
         <canvas id="cropCanvas" aria-label="이미지 위치 조절 영역. 드래그로 이동, 휠이나 핀치로 확대"></canvas>
       </div>
       <div class="stage-meta">
         <span>드래그로 이동 · 휠/핀치로 확대 · 더블클릭하면 처음 상태로</span>
-        <span>고른 칸 전체 <span class="mono" id="outLabel">-</span></span>
+        <span>아래 손잡이를 끌면 화면 높이가 바뀌어요</span>
       </div>
     </section>
-
-    <aside class="panel" aria-label="분할 설정">
+    <div class="resizer" role="separator" aria-orientation="horizontal" aria-label="작업 화면 높이 조절 (위아래 화살표)" tabindex="0"><span></span></div>
+    <div class="panel" aria-label="분할 설정">
       <section>
         <h2>이미지</h2>
         <div class="row">
@@ -396,21 +408,17 @@ output{font-family:var(--f-mono);font-size:12.5px;min-width:48px;text-align:righ
         </div>
       </section>
 
-      <section>
+      <section class="full">
         <h2>조각 <span class="mono" id="pieceCount"></span></h2>
         <ol class="pieces" id="pieces"></ol>
-        <div class="actions">
-          <button class="btn primary block" id="dlAllBtn" type="button">전체 다운로드</button>
-          <button class="btn block" id="sendBtn" type="button">미리보기에 넣기</button>
-        </div>
         <p class="hint dl-hint"></p>
       </section>
-    </aside>
+    </div>
   </div>
 
   <!-- 미리보기 -->
-  <div id="view-preview" class="work" role="tabpanel" aria-labelledby="tab-preview" hidden>
-    <section class="pv-stage" aria-label="게시물 미리보기">
+  <div id="view-preview" class="view" role="tabpanel" aria-labelledby="tab-preview" hidden>
+    <section class="stage-area pv-top" id="pvTop" aria-label="게시물 미리보기">
       <div class="timeline" id="timeline" data-tone="light">
         <article class="tweet" id="tweet">
           <div class="avatar" aria-hidden="true"></div>
@@ -432,17 +440,17 @@ output{font-family:var(--f-mono);font-size:12.5px;min-width:48px;text-align:righ
           </div>
         </article>
       </div>
-      <div class="order">
-        <h3><span>이 순서대로 첨부하세요</span><span class="mono" id="orderCount"></span></h3>
-        <div class="order-list" id="orderList"></div>
-      </div>
-      <div class="order" id="stripWrap">
-        <h3><span>이어 붙여 보기 · 이음새 확인용</span></h3>
-        <div class="strip" id="strip"></div>
-      </div>
     </section>
-
-    <aside class="panel" aria-label="미리보기 설정">
+    <div class="resizer" role="separator" aria-orientation="horizontal" aria-label="미리보기 화면 높이 조절 (위아래 화살표)" tabindex="0"><span></span></div>
+    <div class="panel" aria-label="미리보기 설정">
+      <section class="full">
+        <h2><span>이 순서대로 첨부하세요</span><span class="mono" id="orderCount"></span></h2>
+        <div class="order-list" id="orderList"></div>
+      </section>
+      <section class="full" id="stripWrap">
+        <h2>이어 붙여 보기 · 이음새 확인용</h2>
+        <div class="strip" id="strip"></div>
+      </section>
       <section>
         <h2>보이는 방식</h2>
         <div class="seg" id="pvModeSeg" role="group" aria-label="미리보기 방식">
@@ -482,7 +490,7 @@ output{font-family:var(--f-mono);font-size:12.5px;min-width:48px;text-align:righ
         </div>
         <label class="check"><input type="checkbox" id="showEdit" checked> <span>칸 번호와 빼기 버튼 보이기</span></label>
       </section>
-      <section>
+      <section class="full">
         <h2>보관함 <span class="mono" id="poolCount"></span></h2>
         <div class="row">
           <button class="btn small" id="addPool" type="button">이미지 추가</button>
@@ -499,7 +507,7 @@ output{font-family:var(--f-mono);font-size:12.5px;min-width:48px;text-align:righ
         <p class="hint">파일 이름 앞 두 자리 숫자가 첨부 순서예요.</p>
         <p class="hint dl-hint"></p>
       </section>
-    </aside>
+    </div>
   </div>
 </main>
 
@@ -759,10 +767,10 @@ function layoutCanvas() {
   const B = curBox(), A = B.w / B.h;
   const pad = parseFloat(getComputedStyle(box).paddingLeft) * 2;
   const availW = box.clientWidth - pad;
-  const availH = clamp(window.innerHeight * 0.6, 220, 620);
-  let w = availW, h = w / A;
+  const availH = box.clientHeight - pad;
+  let w = availW, h = w / A;               // 화면 안에 다 들어오게 맞춤
   if (h > availH) { h = availH; w = h * A; }
-  if (h < 150) { h = 150; w = h * A; }    // 장수가 많아 아주 길어지면 가로 스크롤
+  if (h < 110) { h = 110; w = h * A; }    // 장수가 많아 아주 길어지면 가로 스크롤
   w = Math.max(40, Math.floor(w)); h = Math.max(40, Math.floor(h));
   box.classList.toggle('wide', w > availW + 1);
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -1202,8 +1210,9 @@ function renderPreview() {
   media.className = 'media ' + (carousel ? 'carousel' : 'grid n' + n) + (P.edit ? '' : ' clean');
   if (!carousel && n === 1) {
     const it = itemById(P.slots[0]);
-    media.style.aspectRatio = it ? String(clamp(it.w / it.h, 0.75, 2.5)) : '16 / 9';
-  }
+    media.dataset.ar = it ? clamp(it.w / it.h, 0.75, 2.5) : 16 / 9;
+    media.style.aspectRatio = String(media.dataset.ar);
+  } else media.dataset.ar = 16 / 9;
   const fa = frameAspect();
   for (let i = 0; i < n; i++) {
     const it = itemById(P.slots[i]);
@@ -1223,7 +1232,7 @@ function renderPreview() {
     }
     media.appendChild(slot);
   }
-  sizeCarousel();
+  fitPreview();
 
   // 첨부 순서
   const ord = $('#orderList'); ord.innerHTML = '';
@@ -1263,14 +1272,25 @@ function renderPreview() {
   }
 }
 
-// 캐러셀 칸 크기: 첫 화면 높이 고정, 각 장은 자기 비율대로(너무 넓으면 90%에서 잘림)
-function sizeCarousel() {
-  const media = $('#media'), carousel = media.classList.contains('carousel');
+// 미리보기 화면 높이 안에 게시물 전체가 다 보이게 맞춤
+function fitPreview() {
+  const media = $('#media'), tweet = $('#tweet'), top = $('#pvTop');
+  const carousel = media.classList.contains('carousel');
   $('#navPrev').hidden = $('#navNext').hidden = !carousel;
   const old = $('.count-pill', media.parentNode); if (old) old.remove();
-  if (!carousel) return;
+  if (!top.offsetParent) return;
+  tweet.style.maxWidth = '';
+  if (carousel) media.style.height = '0px';
+  const tl = $('#timeline'), cs = getComputedStyle(tl);
+  const availH = tl.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  const nonMedia = tweet.offsetHeight - media.offsetHeight;
+  const maxMH = Math.max(140, availH - nonMedia - 2);
+  if (!carousel) {   // 그리드: 높이에 맞춰 폭을 줄임
+    tweet.style.maxWidth = `min(100%, ${Math.floor(maxMH * (+media.dataset.ar || 16 / 9) + 86)}px)`;
+    return;
+  }
   const cw = media.clientWidth; if (!cw) return;
-  const H = Math.min(cw * 0.86 / frameAspect(), cw * 1.25, Math.max(320, window.innerHeight * 0.78));   // 첫 장이 폭의 약 86%를 차지하고 다음 장이 옆에 살짝 보이게
+  const H = Math.min(cw * 0.86 / frameAspect(), maxMH);   // 첫 장이 폭의 약 86%를 차지하고 다음 장이 옆에 살짝 보이게
   media.style.height = H + 'px';
   $$('.slot', media).forEach(s => { s.style.width = Math.min(H * (+s.dataset.ar), cw) + 'px'; });
   const pill = document.createElement('span'); pill.className = 'count-pill'; pill.textContent = `1/${P.n}`;
@@ -1289,7 +1309,28 @@ $('#media').addEventListener('scroll', updatePill, { passive: true });
 const smooth = () => matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
 $('#navPrev').onclick = () => { const m = $('#media'); m.scrollBy({ left: -m.clientWidth * 0.8, behavior: smooth() }); };
 $('#navNext').onclick = () => { const m = $('#media'); m.scrollBy({ left: m.clientWidth * 0.8, behavior: smooth() }); };
-new ResizeObserver(() => sizeCarousel()).observe($('#media').parentNode);
+new ResizeObserver(() => fitPreview()).observe($('#pvTop'));
+
+/* 위아래 화면 높이 조절 손잡이 */
+$$('.view').forEach(view => {
+  const r = $('.resizer', view), key = 'tis-stage-' + view.id;
+  let pct = 60;
+  try { const v = parseFloat(localStorage.getItem(key)); if (v) pct = v; } catch (e) {}
+  const apply = () => { pct = clamp(pct, 25, 85); view.style.setProperty('--stage', pct + '%'); };
+  const save = () => { try { localStorage.setItem(key, String(pct)); } catch (e) {} };
+  apply();
+  r.addEventListener('pointerdown', e => {
+    e.preventDefault(); r.setPointerCapture(e.pointerId); r.classList.add('drag');
+    const rect = view.getBoundingClientRect();
+    const move = ev => { pct = (ev.clientY - rect.top) / rect.height * 100; apply(); };
+    const up = () => { r.classList.remove('drag'); r.removeEventListener('pointermove', move); r.removeEventListener('pointerup', up); r.removeEventListener('pointercancel', up); save(); };
+    r.addEventListener('pointermove', move); r.addEventListener('pointerup', up); r.addEventListener('pointercancel', up);
+  });
+  r.addEventListener('keydown', e => {
+    if (e.key === 'ArrowUp') pct -= 5; else if (e.key === 'ArrowDown') pct += 5; else return;
+    e.preventDefault(); apply(); save();
+  });
+});
 
 // 칸 클릭
 function onSlotActivate(i) {
@@ -1406,7 +1447,7 @@ function go(name) {
   $('#view-split').hidden = name !== 'split';
   $('#view-preview').hidden = name !== 'preview';
   if (location.hash !== '#' + name) location.hash = name;
-  if (name === 'split') layoutCanvas(); else sizeCarousel();
+  if (name === 'split') layoutCanvas(); else fitPreview();
 }
 $$('.tab').forEach(b => b.addEventListener('click', () => go(b.dataset.tab)));
 window.addEventListener('hashchange', () => go(location.hash.slice(1)));
